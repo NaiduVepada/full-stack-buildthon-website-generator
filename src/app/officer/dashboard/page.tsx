@@ -83,6 +83,42 @@ export default function OfficerDashboard() {
     setSelectedDistrict(currentUser.district || '');
   }, [router]);
 
+  const handleExportReport = () => {
+    // Prepare CSV data
+    const csvHeaders = ['Name', 'Phone', 'Email', 'Location', 'District', 'Farm Size', 'Crops', 'Status', 'Alerts', 'Last Active'];
+    const csvRows = filteredFarmers.map(farmer => [
+      farmer.name,
+      farmer.phone,
+      farmer.email,
+      farmer.location,
+      farmer.district,
+      farmer.farmSize,
+      farmer.crops.join('; '),
+      farmer.status,
+      farmer.alerts.toString(),
+      farmer.lastActive
+    ]);
+
+    // Create CSV content
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `farmer_report_${selectedDistrict || 'all'}_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   if (!user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
@@ -199,7 +235,7 @@ export default function OfficerDashboard() {
                 More Filters
               </Button>
 
-              <Button className="bg-green-600 hover:bg-green-700">
+              <Button onClick={handleExportReport} className="bg-green-600 hover:bg-green-700">
                 <Download className="w-4 h-4 mr-2" />
                 Export Report
               </Button>
